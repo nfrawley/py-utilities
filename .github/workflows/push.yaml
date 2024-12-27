@@ -1,4 +1,5 @@
-name: Push File to Multiple Repos
+name: Sync utilities.py to Repo 2
+
 on:
   push:
     paths:
@@ -17,9 +18,13 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
 
+      - name: Remove existing clone of Repo 2 if it exists
+        run: |
+          rm -rf test  # Remove any existing directory called 'repo2' to prevent errors
+
       - name: Clone Repository 2
         run: |
-          git clone https://github.com/nfrawley/test.git
+          git clone https://github.com/nfrawley/test.git test  # Clone Repository 2 into a new folder called 'repo2'
           cd test
           git checkout main  # Adjust if you're using a different branch
 
