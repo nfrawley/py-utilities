@@ -1,0 +1,19 @@
+name: Push File
+on: push
+jobs:
+  copy-file:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Pushes test file
+      uses: dmnemec/copy_file_to_another_repo_action@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.test_token }}
+      with:
+        source_file: 'utilities.py'
+        destination_repo: 'nfrawley/test'
+        destination_folder: '/'
+        user_email: 'noah.frawley@proton.me'
+        user_name: 'nfrawley'
+        commit_message: 'copy new utilities.py'
