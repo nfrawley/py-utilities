@@ -1,59 +1,38 @@
 name: Push File to Multiple Repos
 on:
-  release:
-    types: [published]
+  push:
+    paths:
+      - 'utilities.py'  # Trigger the workflow only when utilities.py changes
+
 jobs:
-  copy-file:
+  sync-utilities:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout Repository 1
+        uses: actions/checkout@v3
 
-    - name: Construct Release URL
-      id: construct_release_url
-      run: |
-        # Get the release tag name
-        RELEASE_TAG="${{ github.event.release.tag_name }}"
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
 
-        # Construct the release URL
-        RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/${RELEASE_TAG}"
+      - name: Clone Repository 2
+        run: |
+          git clone https://github.com/nfrawley/test.git
+          cd test
+          git checkout main  # Adjust if you're using a different branch
 
-        # Set the release URL as an environment variable
-        echo "RELEASE_URL=$RELEASE_URL" >> $GITHUB_ENV
+      - name: Copy utilities.py to Repository 2
+        run: |
+          cp ../utilities.py ./utilities.py
 
-    - name: Read repositories from file and push file
-      run: |
-        # Read the file with repositories (adjust the path to your file)
-        REPO_LIST=".github/workflows/repos.txt"
+      - name: Commit and Push changes to Repository 2
+        run: |
+          cd test
+          git add utilities.py
+          git commit -m "Sync utilities.py from Repository 1"
+          git push origin main  # Adjust branch name if necessary
+        env:
+          GITHUB_TOKEN: ${{ secrets.TEST_TOKEN }}
 
-        # Loop through each repository in the file
-        while IFS= read -r REPO; do
-          if [ -n "$REPO" ]; then  # Ensure the line is not empty
-            echo "Pushing to repository: $REPO"
-
-            # Clone the repository with authentication
-            git clone --depth 1 "https://${{ secrets.TEST_TOKEN }}@github.com/${REPO}.git" repo_temp
-            cd repo_temp
-
-            # Configure git user
-            git config user.email "noah.frawley@proton.me"
-            git config user.name "nfrawley"
-
-            # Copy the file from the source repository
-            cp "../utilities.py" .
-
-            # Check if there are any changes to commit
-            if git diff --exit-code; then
-              echo "No changes detected in $REPO. Skipping commit."
-            else
-              # Commit and push the changes
-              git add utilities.py
-              git commit -m "copy new utilities.py version ${{ github.event.release.tag_name }} ${{ env.RELEASE_URL }}"
-              git push origin main
-            fi
-
-            # Cleanup and move to next repo
-            cd ..
-            rm -rf repo_temp
-          fi
-        done < "$REPO_LIST"
