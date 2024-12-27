@@ -1,43 +1,35 @@
-name: Sync utilities.py to Repo 2
-
+name: Push File
 on:
-  push:
-    paths:
-      - 'utilities.py'  # Trigger the workflow only when utilities.py changes
-
+  release:
+    types: [published]
 jobs:
-  sync-utilities:
+  copy-file:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository 1
-        uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v2
 
-      - name: Set up Git
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
+    - name: Construct Release URL
+      id: construct_release_url
+      run: |
+        # Get the release tag name
+        RELEASE_TAG="${{ github.event.release.tag_name }}"
 
-      - name: Remove existing clone of Repo 2 if it exists
-        run: |
-          rm -rf test  # Remove any existing directory called 'repo2' to prevent errors
+        # Construct the release URL
+        RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/${RELEASE_TAG}"
 
-      - name: Clone Repository 2
-        run: |
-          git clone https://github.com/nfrawley/test.git test  # Clone Repository 2 into a new folder called 'repo2'
-          cd test
-          git checkout main  # Adjust if you're using a different branch
+        # Set the release URL as an environment variable
+        echo "RELEASE_URL=$RELEASE_URL" >> $GITHUB_ENV
 
-      - name: Copy utilities.py to Repository 2
-        run: |
-          cp ../utilities.py ./utilities.py
-
-      - name: Commit and Push changes to Repository 2
-        run: |
-          cd test
-          git add utilities.py
-          git commit -m "Sync utilities.py from Repository 1"
-          git push origin main  # Adjust branch name if necessary
-        env:
-          GITHUB_TOKEN: ${{ secrets.TEST_TOKEN }}
-
+    - name: Pushes test file
+      uses: dmnemec/copy_file_to_another_repo_action@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.test_token }}
+        RELEASE_URL: ${{ env.RELEASE_URL }}
+      with:
+        source_file: 'utilities.py'
+        destination_repo: 'nfrawley/test'
+        destination_folder: '/'
+        user_email: 'noah.frawley@proton.me'
+        user_name: 'nfrawley'
+        commit_message: 'copy new utilities.py version ${{ github.event.release.tag_name }} ${{ env.RELEASE_URL }}'
