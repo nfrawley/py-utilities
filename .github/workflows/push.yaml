@@ -1,5 +1,5 @@
 name: Push File
-on: push
+on: release
 jobs:
   copy-file:
     runs-on: ubuntu-latest
