@@ -1,0 +1,32 @@
+name: Trigger File Push to test repo
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  trigger-workflow:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get commit URL from release
+      id: get_commit_url
+      run: |
+        # Fetch the commit associated with the release tag using the GitHub API
+        RELEASE_TAG="${{ github.event.release.tag_name }}"
+        API_URL="https://api.github.com/repos/${{ github.repository }}/releases/tags/${RELEASE_TAG}"
+        COMMIT_URL=$(curl -s $API_URL | jq -r .target_commitish)
+        COMMIT_SHA=$(curl -s "https://api.github.com/repos/${{ github.repository }}/commits/${COMMIT_URL}" | jq -r .sha)
+        COMMIT_URL="https://github.com/${{ github.repository }}/commit/${COMMIT_SHA}"
+        echo "COMMIT_URL=$COMMIT_URL" >> $GITHUB_ENV
+    - name: Trigger the workflow in the other repository
+      uses: peter-evans/repository-dispatch@v2
+      with:
+        token: ${{ secrets.TEST_TOKEN }}
+        repository: 'nfrawley/py-utilities'
+        event-type: 'trigger-push-file'
+        client-payload: |
+          {
+            "destination_repo": "nfrawley/test",
+            "source_file": "another_file.py",
+            "commit_message": "AUTOMATED - new utilities.py version ${{ github.event.release.tag_name }} ${{ env.COMMIT_URL }}"
+          }
