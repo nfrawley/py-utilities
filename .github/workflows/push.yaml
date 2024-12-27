@@ -8,14 +8,22 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+
+    - name: Get commit URL
+      id: commit_url
+      run: |
+        echo "COMMIT_URL=${{ github.event.head_commit.url }}" >> $GITHUB_ENV
+
     - name: Pushes test file
       uses: dmnemec/copy_file_to_another_repo_action@main
       env:
         API_TOKEN_GITHUB: ${{ secrets.test_token }}
+        COMMIT_URL: ${{ env.COMMIT_URL }}
       with:
         source_file: 'utilities.py'
         destination_repo: 'nfrawley/test'
         destination_folder: '/'
         user_email: 'noah.frawley@proton.me'
         user_name: 'nfrawley'
-        commit_message: 'copy new utilities.py version ${{ github.event.release.tag_name }} ${{ github.event.head_commit.url }}'
+        # Include commit URL from the `commit_url` step
+        commit_message: 'copy new utilities.py version ${{ github.event.release.tag_name }} ${{ env.COMMIT_URL }}'
