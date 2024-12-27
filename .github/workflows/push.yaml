@@ -31,11 +31,8 @@ jobs:
           if [ -n "$REPO" ]; then  # Ensure the line is not empty
             echo "Pushing to repository: $REPO"
 
-            # Authenticate with GitHub using the personal access token
-            git config --global url."https://${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
-
-            # Clone the repository
-            git clone --depth 1 "https://github.com/${REPO}.git" repo_temp
+            # Clone the repository with authentication
+            git clone --depth 1 "https://${{ secrets.test_token }}@github.com/${REPO}.git" repo_temp
             cd repo_temp
 
             # Configure git user
