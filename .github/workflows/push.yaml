@@ -1,4 +1,4 @@
-name: Push utilities file to required repos
+name: Push File to Multiple Repos
 on:
   release:
     types: [published]
@@ -12,26 +12,45 @@ jobs:
     - name: Construct Release URL
       id: construct_release_url
       run: |
+        # Get the release tag name
         RELEASE_TAG="${{ github.event.release.tag_name }}"
+
+        # Construct the release URL
         RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/${RELEASE_TAG}"
+
+        # Set the release URL as an environment variable
         echo "RELEASE_URL=$RELEASE_URL" >> $GITHUB_ENV
 
     - name: Read repositories from file and push file
       run: |
+        # Read the file with repositories (adjust the path to your file)
         REPO_LIST=".github/workflows/repos.txt"
 
+        # Loop through each repository in the file
         while IFS= read -r REPO; do
           if [ -n "$REPO" ]; then  # Ensure the line is not empty
             echo "Pushing to repository: $REPO"
 
-            git clone --depth 1 https://github.com/${REPO}.git repo_temp
+            # Authenticate with GitHub using the personal access token
+            git config --global url."https://${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+            # Clone the repository
+            git clone --depth 1 "https://github.com/${REPO}.git" repo_temp
             cd repo_temp
+
+            # Configure git user
             git config user.email "noah.frawley@proton.me"
             git config user.name "nfrawley"
+
+            # Copy the file from the source repository
             cp "../utilities.py" .
+
+            # Commit and push the changes
             git add utilities.py
             git commit -m "copy new utilities.py version ${{ github.event.release.tag_name }} ${{ env.RELEASE_URL }}"
             git push origin main
+
+            # Cleanup and move to next repo
             cd ..
             rm -rf repo_temp
           fi
