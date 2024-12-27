@@ -9,10 +9,16 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Get commit URL
-      id: commit_url
+    - name: Get commit URL from release
+      id: get_commit_url
       run: |
-        echo "COMMIT_URL=${{ github.event.head_commit.url }}" >> $GITHUB_ENV
+        # Fetch the commit associated with the release tag using the GitHub API
+        RELEASE_TAG="${{ github.event.release.tag_name }}"
+        API_URL="https://api.github.com/repos/${{ github.repository }}/releases/tags/${RELEASE_TAG}"
+        COMMIT_URL=$(curl -s $API_URL | jq -r .target_commitish)
+        COMMIT_SHA=$(curl -s "https://api.github.com/repos/${{ github.repository }}/commits/${COMMIT_URL}" | jq -r .sha)
+        COMMIT_URL="https://github.com/${{ github.repository }}/commit/${COMMIT_SHA}"
+        echo "COMMIT_URL=$COMMIT_URL" >> $GITHUB_ENV
 
     - name: Pushes test file
       uses: dmnemec/copy_file_to_another_repo_action@main
@@ -25,5 +31,4 @@ jobs:
         destination_folder: '/'
         user_email: 'noah.frawley@proton.me'
         user_name: 'nfrawley'
-        # Include commit URL from the `commit_url` step
         commit_message: 'copy new utilities.py version ${{ github.event.release.tag_name }} ${{ env.COMMIT_URL }}'
