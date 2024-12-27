@@ -1,7 +1,7 @@
 name: Push File
 on:
-  push:
-    tags: [ 'v*.*.*' ]
+  release:
+    types: [published]
 jobs:
   copy-file:
     runs-on: ubuntu-latest
@@ -18,4 +18,4 @@ jobs:
         destination_folder: '/'
         user_email: 'noah.frawley@proton.me'
         user_name: 'nfrawley'
-        commit_message: 'copy new utilities.py version ${{github.event.release.tag_name}}'
+        commit_message: 'copy new utilities.py version ${{ github.event.release.tag_name }}'
