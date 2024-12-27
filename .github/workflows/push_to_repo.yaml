@@ -14,6 +14,8 @@ on:
         description: 'Commit message for the push'
         required: true
         default: 'AUTOMATED - copy new utilities.py version'
+  repository_dispatch:
+    types: [trigger-push-file]
       
 jobs:
   copy-file:
