@@ -9,31 +9,27 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Get commit URL from release tag
-      id: get_commit_url
+    - name: Construct Release URL
+      id: construct_release_url
       run: |
         # Get the release tag name
         RELEASE_TAG="${{ github.event.release.tag_name }}"
 
-        # Use GitHub API to get the commit associated with the tag
-        API_URL="https://api.github.com/repos/${{ github.repository }}/git/refs/tags/${RELEASE_TAG}"
-        COMMIT_SHA=$(curl -s $API_URL | jq -r .object.sha)
+        # Construct the release URL
+        RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/${RELEASE_TAG}"
 
-        # Construct the commit URL
-        COMMIT_URL="https://github.com/${{ github.repository }}/commit/${COMMIT_SHA}"
-
-        # Output the commit URL for debugging purposes
-        echo "COMMIT_URL=$COMMIT_URL" >> $GITHUB_ENV
+        # Set the release URL as an environment variable
+        echo "RELEASE_URL=$RELEASE_URL" >> $GITHUB_ENV
 
     - name: Pushes test file
       uses: dmnemec/copy_file_to_another_repo_action@main
       env:
         API_TOKEN_GITHUB: ${{ secrets.test_token }}
-        COMMIT_URL: ${{ env.COMMIT_URL }}
+        RELEASE_URL: ${{ env.RELEASE_URL }}
       with:
         source_file: 'utilities.py'
         destination_repo: 'nfrawley/test'
         destination_folder: '/'
         user_email: 'noah.frawley@proton.me'
         user_name: 'nfrawley'
-        commit_message: 'copy new utilities.py version ${{ github.event.release.tag_name }} ${{ env.COMMIT_URL }}'
+        commit_message: 'copy new utilities.py version ${{ github.event.release.tag_name }} ${{ env.RELEASE_URL }}'
