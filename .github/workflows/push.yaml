@@ -9,26 +9,20 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Get commit URL from release
+    - name: Get commit URL from release tag
       id: get_commit_url
       run: |
-        # Get the tag name and target_commitish (which can be a commit SHA or branch name)
+        # Get the release tag name
         RELEASE_TAG="${{ github.event.release.tag_name }}"
-        TARGET_COMMITISH="${{ github.event.release.target_commitish }}"
 
-        echo "Release tag: $RELEASE_TAG"
-        echo "Target commitish (commit hash or branch): $TARGET_COMMITISH"
+        # Use GitHub API to get the commit associated with the tag
+        API_URL="https://api.github.com/repos/${{ github.repository }}/git/refs/tags/${RELEASE_TAG}"
+        COMMIT_SHA=$(curl -s $API_URL | jq -r .object.sha)
 
-        # If target_commitish is a branch name, we need to get the latest commit hash for that branch
-        if [[ "$TARGET_COMMITISH" == *"/"* ]]; then
-          COMMIT_SHA=$(git rev-parse "$TARGET_COMMITISH")
-        else
-          COMMIT_SHA="$TARGET_COMMITISH"
-        fi
-
-        # Build the commit URL
+        # Construct the commit URL
         COMMIT_URL="https://github.com/${{ github.repository }}/commit/${COMMIT_SHA}"
 
+        # Output the commit URL for debugging purposes
         echo "COMMIT_URL=$COMMIT_URL" >> $GITHUB_ENV
 
     - name: Pushes test file
