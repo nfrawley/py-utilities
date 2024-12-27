@@ -1,5 +1,7 @@
 name: Push File
-on: release
+on:
+  push:
+    tags: [ 'v*.*.*' ]
 jobs:
   copy-file:
     runs-on: ubuntu-latest
