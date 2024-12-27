@@ -32,7 +32,7 @@ jobs:
             echo "Pushing to repository: $REPO"
 
             # Clone the repository with authentication
-            git clone --depth 1 "https://${{ secrets.test_token }}@github.com/${REPO}.git" repo_temp
+            git clone --depth 1 "https://${{ secrets.TEST_TOKEN }}@github.com/${REPO}.git" repo_temp
             cd repo_temp
 
             # Configure git user
@@ -42,10 +42,15 @@ jobs:
             # Copy the file from the source repository
             cp "../utilities.py" .
 
-            # Commit and push the changes
-            git add utilities.py
-            git commit -m "copy new utilities.py version ${{ github.event.release.tag_name }} ${{ env.RELEASE_URL }}"
-            git push origin main
+            # Check if there are any changes to commit
+            if git diff --exit-code; then
+              echo "No changes detected in $REPO. Skipping commit."
+            else
+              # Commit and push the changes
+              git add utilities.py
+              git commit -m "copy new utilities.py version ${{ github.event.release.tag_name }} ${{ env.RELEASE_URL }}"
+              git push origin main
+            fi
 
             # Cleanup and move to next repo
             cd ..
