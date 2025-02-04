@@ -1,4 +1,4 @@
-name: Trigger File Push to test repo
+name: Push File to forza_track_selector
 
 on:
   release:

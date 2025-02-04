@@ -1,4 +1,4 @@
-name: Trigger File Push to test repo
+name: Push File to budget_tracker
 
 on:
   release:
